@@ -1,5 +1,4 @@
 name: Build-Test CI
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
 jobs:
   build-android:
@@ -12,7 +11,7 @@ jobs:
           java-version: '20'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.7.7'
+          flutter-version: '3.16.1'
           channel: 'stable'
       - run: flutter pub get
       - run: flutter build appbundle
@@ -22,7 +21,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.7.7'
+          flutter-version: '3.16.1'
           channel: 'stable'
       - run: flutter pub get
       - run: flutter build web
