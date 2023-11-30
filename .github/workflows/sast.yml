@@ -40,7 +40,9 @@ jobs:
   ##############################
   dependency-check:
     runs-on: ubuntu-latest
-    container: owasp/dependency-check:8.2.1
+    container:
+      image: owasp/dependency-check:8.2.1
+      options: --user root
     steps:
       - uses: actions/checkout@v3
       - run: /usr/share/dependency-check/bin/dependency-check.sh --enableExperimental -o . --format=ALL -s ./pubspec.yaml -s ./pubspec.lock
