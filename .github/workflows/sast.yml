@@ -1,0 +1,87 @@
+name: SAST CI
+on: [push]
+jobs:
+  ##############################
+  # SAST (LINT)
+  ##############################
+  flutter-analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.16.1'
+          channel: 'stable'
+      - run: flutter pub get
+      - run: flutter analyze --write ./flutter-analyze-report.txt
+      - name: 'Upload flutter analyze report artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: flutter-analyze-artifact
+          path: flutter-analyze-report.txt
+
+  ##############################
+  # SWIFT LINT
+  ##############################
+  swift-lint:
+    runs-on: ubuntu-latest
+    container: ghcr.io/realm/swiftlint:0.51.0
+    steps:
+      - uses: actions/checkout@v3
+      - run: swiftlint ./ios --reporter="sonarqube" > ./swiftlint.json
+      - name: 'Upload swift lint report artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: swiftlint-artifact
+          path: swiftlint.json
+
+  ##############################
+  # SCA
+  ##############################
+  dependency-check:
+    runs-on: ubuntu-latest
+    container: owasp/dependency-check:8.2.1
+    steps:
+      - uses: actions/checkout@v3
+      - run: /usr/share/dependency-check/bin/dependency-check.sh --enableExperimental -o . --format=ALL -s ./pubspec.yaml -s ./pubspec.lock
+      - name: 'Upload dependency check report artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-artifact
+          path: dependency-check-*
+
+  ##############################
+  # OSV-SCANNER
+  ##############################
+  osv-scanner:
+    runs-on: ubuntu-latest
+    container: ghcr.io/google/osv-scanner:v1.4.0
+    steps:
+      - uses: actions/checkout@v3
+      - run: /osv-scanner -r --format json . > osv-scanner-report.json
+      - name: 'Upload osv scanner report artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: osv-scanner-artifact
+          path: osv-scanner-report.json
+
+  ##############################
+  # MOBSF SCAN
+  ##############################
+  mobsf-scan:
+    runs-on: ubuntu-latest
+    container: opensecurity/mobsfscan:0.3.4
+    steps:
+      - uses: actions/checkout@v3
+      - run: mobsfscan ios --sonarqube --no-fail -o ios-mobsfscan-report.json
+      - run: mobsfscan android --sonarqube --no-fail -o android-mobsfscan-report.json
+      - name: 'Upload mobsf scan ios report artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-mobsf-scan-artifact
+          path: ios-mobsfscan-report.json
+      - name: 'Upload mobsf scan android report artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-mobsf-scan-artifact
+          path: android-mobsf-scan-report.json
