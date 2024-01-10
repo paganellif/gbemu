@@ -1,0 +1,47 @@
+
+import 'dart:typed_data';
+
+import 'bitmap.dart';
+
+/// Represents a complete bitmap file, composed of bitmap data and a bitmap header containing metadata.
+class BitmapFile {
+  static const int headerSize = 122;
+
+  late Uint8List header;
+  Bitmap image;
+
+  BitmapFile(this.image) {
+    header = Uint8List(length());
+
+    // ARGB32 header
+    final ByteData bd = header.buffer.asByteData();
+    bd.setUint8(0x0, 0x42);
+    bd.setUint8(0x1, 0x4d);
+    bd.setInt32(0x2, length(), Endian.little);
+    bd.setInt32(0xa, BitmapFile.headerSize, Endian.little);
+    bd.setUint32(0xe, 108, Endian.little);
+    bd.setUint32(0x12, image.width, Endian.little);
+    bd.setUint32(0x16, -image.height, Endian.little);
+    bd.setUint16(0x1a, 1, Endian.little);
+    bd.setUint32(0x1c, 32, Endian.little); // Pixel size
+    bd.setUint32(0x1e, 3, Endian.little); // Bit fields
+    bd.setUint32(0x22, image.size(), Endian.little);
+    bd.setUint32(0x36, 0x000000ff, Endian.little);
+    bd.setUint32(0x3a, 0x0000ff00, Endian.little);
+    bd.setUint32(0x3e, 0x00ff0000, Endian.little);
+    bd.setUint32(0x42, 0xff000000, Endian.little);
+  }
+
+  /// Get the full length of the bitmap file (header and data).
+  ///
+  int length() {
+    return BitmapFile.headerSize + image.size();
+  }
+
+  /// Get the bitmap file byte data
+  Uint8List getFile() {
+    Uint8List data = Uint8List.fromList(header);
+    data.setRange(BitmapFile.headerSize, length(), image.data);
+    return data;
+  }
+}
